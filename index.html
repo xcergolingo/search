@@ -1,9 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hello World</title>
+    <title>Movie Search Engine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            padding: 10px; /* Added padding for mobile spacing */
+        }
+        .search-container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px; /* Limiting max width */
+        }
+        .search-box, .language-select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 16px;
+        }
+        .search-button {
+            width: 100%; /* Full width button for mobile */
+            padding: 10px 0;
+            border: none;
+            border-radius: 20px;
+            background-color: #4285f4;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .search-button:hover {
+            background-color: #357ae8;
+        }
+        .results {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .result-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        .result-item a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Media query for larger screens */
+        @media (min-width: 600px) {
+            .search-box {
+                width: calc(75% - 20px); /* 3:1 ratio with language select */
+                display: inline-block;
+            }
+            .language-select {
+                width: calc(25% - 20px);
+                display: inline-block;
+            }
+            .search-button {
+                width: auto;
+                padding: 10px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World again</h1>
+    <div class="search-container">
+        <input type="text" id="searchQuery" class="search-box" placeholder="Search for movies...">
+        <select id="languageSelect" class="language-select">
+            <option value="en">English</option>
+        </select>
+        <button onclick="searchMovies()" class="search-button">Search</button>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('searchQuery').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchMovies();
+            }
+        });
+
+        function searchMovies() {
+            var query = document.getElementById('searchQuery').value;
+            var lang = document.getElementById('languageSelect').value;
+            var apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie';
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ q: query, lang: lang }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data.body);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function displayResults(results) {
+            var resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            results.forEach(item => {
+                var resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.innerHTML = `
+                    <p>${item.sentence}</p>
+                    <a href="${item.url}" target="_blank">View Video</a>
+                `;
+                resultsDiv.appendChild(resultItem);
+            });
+        }
+    </script>
 </body>
 </html>
