@@ -20,11 +20,11 @@
         }
         .search-box, .language-select {
             width: 100%;
-            padding: 10px;
+            padding: 15px;
             margin-bottom: 10px;
             border: 1px solid #ddd;
             border-radius: 20px;
-            font-size: 16px;
+            font-size: 18px;
         }
         .search-button {
             width: 100%; /* Full width button for mobile */
@@ -73,11 +73,20 @@
                 padding: 10px 20px;
             }
         }
+		
+	   /* Media query for very small screens */
+		@media (max-width: 360px) {
+			.search-box, .language-select {
+				padding: 20px; /* Even larger padding for smaller devices */
+				font-size: 20px; /* Even larger font size */
+		}
+}	
+		
     </style>
 </head>
 <body>
     <div class="search-container">
-        <input type="text" id="searchQuery" class="search-box" placeholder="Search for movies...">
+        <input type="text" id="searchQuery" class="search-box" placeholder="Search for sentences...">
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
         </select>
