@@ -88,9 +88,13 @@
 </head>
 <body>
     <div class="search-container">
-        <input type="text" id="searchQuery" class="search-box" placeholder="Search for movies...">
+        <input type="text" id="searchQuery" class="search-box" placeholder="Search for sentences...">
         <select id="languageSelect" class="language-select">
-            <option value="en">English</option>
+			<option value="en">English</option>
+			<option value="ja">Japanese</option>
+			<option value="ru">Russian</option>
+			<option value="fr">French</option>
+
         </select>
         <button onclick="searchMovies()" class="search-button">Search</button>
         <div id="results" class="results"></div>
