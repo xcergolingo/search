@@ -100,47 +100,74 @@
         <div id="results" class="results"></div>
     </div>
 
-    <script>
-        document.getElementById('searchQuery').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                searchMovies();
-            }
-        });
+	 <script>
+		// Function to extract URL query parameters
+		function getQueryParams() {
+			const params = {};
+			const queryString = window.location.search;
+			const regex = /[?&]([^=#]+)=([^&#]*)/g;
+			let match;
+			while (match = regex.exec(queryString)) {
+				params[match[1]] = decodeURIComponent(match[2].replace(/\+/g, " "));
+			}
+			return params;
+		}
 
-        function searchMovies() {
-            var query = document.getElementById('searchQuery').value;
-            var lang = document.getElementById('languageSelect').value;
-            var apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie';
-            
-            fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ q: query, lang: lang }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                displayResults(data.body);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
+		// Function to handle the search
+		function searchMovies() {
+			const query = document.getElementById('searchQuery').value;
+			const lang = document.getElementById('languageSelect').value;
+			const apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie';
+			console.log(query)
+			console.log(lang)
+			fetch(apiUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ q: query, lang: lang }),
+			})
+			.then(response => response.json())
+			.then(data => {
+				displayResults(data.body);
+			})
+			.catch(error => {
+				console.error('Error:', error);
+			});
+		}
 
-        function displayResults(results) {
-            var resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-            results.forEach(item => {
-                var resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                resultItem.innerHTML = `
-                    <p>${item.sentence}</p>
-                    <a href="${item.url}" target="_blank">View Video</a>
-                `;
-                resultsDiv.appendChild(resultItem);
-            });
-        }
-    </script>
+		// Function to display search results
+		function displayResults(results) {
+			const resultsDiv = document.getElementById('results');
+			resultsDiv.innerHTML = ''; // Clear previous results
+			results.forEach(item => {
+				const resultItem = document.createElement('div');
+				resultItem.className = 'result-item';
+				resultItem.innerHTML = `<p>${item.sentence}</p><a href="${item.url}" target="_blank">View Video</a>`;
+				resultsDiv.appendChild(resultItem);
+			});
+		}
+
+		// Event listeners for search input and button
+		document.addEventListener("DOMContentLoaded", function() {
+			// Check for URL parameters and perform search if present
+			const queryParams = getQueryParams();
+			if(queryParams.q && queryParams.lang) {
+				document.getElementById('searchQuery').value = queryParams.q;
+				document.getElementById('languageSelect').value = queryParams.lang;
+								
+				searchMovies(); // Perform the search using URL parameters
+			}
+		});
+
+		document.getElementById('searchQuery').addEventListener('keypress', function(event) {
+			if (event.key === 'Enter') {
+				searchMovies();
+			}
+		});
+
+		// Simulate form submission action for search button
+		document.querySelector(".search-button").addEventListener("click", searchMovies);
+	</script>
 </body>
 </html>
