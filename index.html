@@ -143,7 +143,11 @@
 			results.forEach(item => {
 				const resultItem = document.createElement('div');
 				resultItem.className = 'result-item';
-				resultItem.innerHTML = `<p>${item.sentence}</p><a href="${item.url}" target="_blank">View Video</a>`;
+				let innerHTML = `<p>${item.sentence}</p>`;
+				if (item.url!="NA") { // Only add the link if url is present
+					innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
+				}
+				resultItem.innerHTML = innerHTML;
 				resultsDiv.appendChild(resultItem);
 			});
 		}
