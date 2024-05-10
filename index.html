@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Movie Search Engine</title>
-     <style>
+    <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -11,27 +11,26 @@
             height: 100vh;
             margin: 0;
             background-color: #f5f5f5;
-            padding: 20px;
         }
         .search-container {
             text-align: center;
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
         }
-        .search-box, .language-select {
-            padding: 15px; /* Increased padding */
-            margin-bottom: 15px; /* Increased margin */
+        .search-box, .control {
+            padding: 12px; 
+            margin: 8px 0; 
             border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 18px; /* Increased font size */
+            border-radius: 6px;
+            width: 100%;
         }
         .search-button {
-            padding: 15px 0;
+            padding: 12px 20px;
             border: none;
-            border-radius: 20px;
+            border-radius: 6px;
             background-color: #4285f4;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
         }
         .search-button:hover {
@@ -44,9 +43,9 @@
         .result-item {
             background-color: #fff;
             border: 1px solid #ddd;
-            padding: 20px; /* Increased padding for better spacing */
-            margin-bottom: 15px; /* Increased spacing between items */
-            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 4px;
         }
         .result-item a {
             color: #4285f4;
@@ -55,123 +54,118 @@
         .result-item a:hover {
             text-decoration: underline;
         }
-
-        /* Media query for better layout on small screens */
-        @media (max-width: 599px) {
-            .search-box, .language-select, .search-button {
-                width: 100%;
-            }
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
         }
-
-        /* Media query for larger screens */
-        @media (min-width: 600px) {
-            .search-box {
-                width: calc(75% - 20px); /* 3:1 ratio with language select */
-                display: inline-block;
+        .flex-column {
+            display: flex;
+            flex-direction: column;
+        }
+        .label {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        @media (max-width: 599px) {
+            .flex-row {
+                flex-direction: column;
             }
-            .language-select {
-                width: calc(25% - 20px);
-                display: inline-block;
-            }
-            .search-button {
-                width: auto;
-                padding: 10px 20px;
-            }
-            /* Adjusting result items for larger screens to not fill space too much */
-            .result-item {
-                max-width: 75%;
-                padding: 20px; /* Enough padding for legibility */
-                margin-bottom: 15px; /* Spaced out a bit more */
+            .control {
+                width: calc(100% - 24px);
             }
         }
     </style>
 </head>
 <body>
     <div class="search-container">
-        <input type="text" id="searchQuery" class="search-box" placeholder="Search for sentences...">
-        <select id="languageSelect" class="language-select">
-			<option value="en">English</option>
-			<option value="ja">Japanese</option>
-			<option value="ru">Russian</option>
-			<option value="fr">French</option>
+        <input type="text" id="searchQuery" class="search-box" placeholder="Search...">
+        
+        <div class="flex-row">
+            <div class="flex-column" style="flex: 1;">
+                <span class="label">Language</span>
+                <select id="languageSelect" class="control">
+                    <option value="en">English</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ru">Russian</option>
+                    <option value="fr">French</option>
+                </select>
+            </div>
 
-        </select>
+            <div class="flex-column" style="flex: 1;">
+                <span class="label">Type</span>
+                <select id="typeSelect" class="control">
+                    <option value="sentence">Sentence</option>
+                    <option value="movie">Movie</option>
+                </select>
+            </div>
+
+            <div class="flex-column" style="flex: 0.5;">
+                <span class="label">Word Length Min</span>
+                <input type="number" id="minLength" class="control" value="0">
+            </div>
+
+            <div class="flex-column" style="flex: 0.5;">
+                <span class="label">Word Length Max</span>
+                <input type="number" id="maxLength" class="control" value="20">
+            </div>
+        </div>
+
         <button onclick="searchMovies()" class="search-button">Search</button>
         <div id="results" class="results"></div>
     </div>
 
-	 <script>
-		// Function to extract URL query parameters
-		function getQueryParams() {
-			const params = {};
-			const queryString = window.location.search;
-			const regex = /[?&]([^=#]+)=([^&#]*)/g;
-			let match;
-			while (match = regex.exec(queryString)) {
-				params[match[1]] = decodeURIComponent(match[2].replace(/\+/g, " "));
-			}
-			return params;
-		}
+    <script>
+	    document.getElementById('searchQuery').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchMovies();
+            }
+        });
+		
+        function searchMovies() {
+            const query = document.getElementById('searchQuery').value;
+            const lang = document.getElementById('languageSelect').value;
+            const type = document.getElementById('typeSelect').value;
+            const wordLengthMin = document.getElementById('minLength').value;
+            const wordLengthMax = document.getElementById('maxLength').value;
+            const apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie';
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    q: query,
+                    lang: lang,
+                    type: type,
+                    word_length_min: wordLengthMin,
+                    word_length_max: wordLengthMax
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data.body);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
 
-		// Function to handle the search
-		function searchMovies() {
-			const query = document.getElementById('searchQuery').value;
-			const lang = document.getElementById('languageSelect').value;
-			const apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie';
-			console.log(query)
-			console.log(lang)
-			fetch(apiUrl, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ q: query, lang: lang }),
-			})
-			.then(response => response.json())
-			.then(data => {
-				displayResults(data.body);
-			})
-			.catch(error => {
-				console.error('Error:', error);
-			});
-		}
-
-		// Function to display search results
-		function displayResults(results) {
-			const resultsDiv = document.getElementById('results');
-			resultsDiv.innerHTML = ''; // Clear previous results
-			results.forEach(item => {
-				const resultItem = document.createElement('div');
-				resultItem.className = 'result-item';
-				let innerHTML = `<p>${item.sentence}</p>`;
-				if (item.url!="NA") { // Only add the link if url is present
-					innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
-				}
-				resultItem.innerHTML = innerHTML;
-				resultsDiv.appendChild(resultItem);
-			});
-		}
-
-		// Event listeners for search input and button
-		document.addEventListener("DOMContentLoaded", function() {
-			// Check for URL parameters and perform search if present
-			const queryParams = getQueryParams();
-			if(queryParams.q && queryParams.lang) {
-				document.getElementById('searchQuery').value = queryParams.q;
-				document.getElementById('languageSelect').value = queryParams.lang;
-								
-				searchMovies(); // Perform the search using URL parameters
-			}
-		});
-
-		document.getElementById('searchQuery').addEventListener('keypress', function(event) {
-			if (event.key === 'Enter') {
-				searchMovies();
-			}
-		});
-
-		// Simulate form submission action for search button
-		document.querySelector(".search-button").addEventListener("click", searchMovies);
-	</script>
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            results.forEach(item => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                let innerHTML = `<p>${item.sentence}</p>`;
+                if (item.url != "NA") {
+                    innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
+                }
+                resultItem.innerHTML = innerHTML;
+                resultsDiv.appendChild(resultItem);
+            });
+        }
+    </script>
 </body>
 </html>
