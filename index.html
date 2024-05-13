@@ -162,6 +162,10 @@
                 if (item.url != "NA") {
                     innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
                 }
+				if (item.video_source_name != "NA" & item.video_source_link != "NA") {
+					innerHTML += `<br>`
+                    innerHTML += `<a href="${item.video_source_link}" target="_blank">Source: ${item.video_source_name}</a>`;
+                }
                 resultItem.innerHTML = innerHTML;
                 resultsDiv.appendChild(resultItem);
             });
