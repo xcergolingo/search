@@ -21,6 +21,8 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-height: 80vh; /* Ensure the container does not overflow the viewport */
+            overflow-y: auto; /* Enable vertical scrolling within the container */
         }
         .search-box, .control {
             padding: 12px;
@@ -28,7 +30,7 @@
             border: none;
             border-radius: 6px;
             width: 100%;
-            box-sizing: border-box; /* Makes elements fit exactly their container */
+            box-sizing: border-box;
         }
         .search-box {
             font-size: 18px;
@@ -81,7 +83,7 @@
         }
         .flex-row {
             display: flex;
-            flex-wrap: wrap; /* Allows wrapping to the next line */
+            flex-wrap: wrap;
             justify-content: space-between;
             gap: 10px;
         }
@@ -102,10 +104,32 @@
                 width: calc(25% - 10px);
             }
         }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 6px;
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .pagination button:hover {
+            background-color: #2980b9;
+        }
+        .pagination .disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
-    <div class="search-container">
+    <div class="search-container" id="searchContainer">
         <input type="text" id="searchQuery" class="search-box" placeholder="Search...">
         
         <div class="flex-row">
@@ -143,15 +167,24 @@
 
         <button onclick="searchMovies()" class="search-button">Search</button>
         <div id="results" class="results"></div>
+        <div class="pagination" id="pagination"></div>
     </div>
 
     <script>
-	    document.getElementById('searchQuery').addEventListener('keypress', function(event) {
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let allResults = [];
+		
+        document.getElementById('searchQuery').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 searchMovies();
             }
         });
-		
+        
+        function scrollToTop() {
+            document.getElementById('searchContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
         function searchMovies() {
             const query = document.getElementById('searchQuery').value;
             const lang = document.getElementById('languageSelect').value;
@@ -189,16 +222,24 @@
             })
             .then(response => response.json())
             .then(data => {
-                displayResults(data.body);
+                allResults = data.body;
+                currentPage = 1;
+                displayResults();
+                displayPagination();
+                scrollToTop(); // Scroll to top after search
             })
             .catch(error => {
                 console.error('Error:', error);
             });
         }
 
-        function displayResults(results) {
+        function displayResults() {
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const results = allResults.slice(start, end);
+
             results.forEach(item => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'result-item';
@@ -213,6 +254,45 @@
                 resultItem.innerHTML = innerHTML;
                 resultsDiv.appendChild(resultItem);
             });
+        }
+
+        function displayPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = '';
+            const totalPages = Math.ceil(allResults.length / itemsPerPage);
+
+            if (totalPages > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Prev';
+                prevButton.onclick = prevPage;
+                prevButton.className = currentPage === 1 ? 'disabled' : '';
+                paginationDiv.appendChild(prevButton);
+
+                const nextButton = document.createElement('button');
+                nextButton.textContent = 'Next';
+                nextButton.onclick = nextPage;
+                nextButton.className = currentPage === totalPages ? 'disabled' : '';
+                paginationDiv.appendChild(nextButton);
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayResults();
+                displayPagination();
+                scrollToTop(); // Scroll to top when navigating pages
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(allResults.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayResults();
+                displayPagination();
+                scrollToTop(); // Scroll to top when navigating pages
+            }
         }
     </script>
 </body>
