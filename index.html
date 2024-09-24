@@ -231,28 +231,35 @@
             });
         }
 
-        function displayResults() {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const results = allResults.slice(start, end);
+		function displayResults() {
+			const resultsDiv = document.getElementById('results');
+			resultsDiv.innerHTML = '';
+			const start = (currentPage - 1) * itemsPerPage;
+			const end = start + itemsPerPage;
+			const results = allResults.slice(start, end);
 
-            results.forEach(item => {
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                let innerHTML = `<p>${item.sentence}</p>`;
-                if (item.url !== "NA") {
-                    innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
-                }
-                if (item.video_source_name !== "NA" && item.video_source_link !== "NA") {
-                    innerHTML += `<br>`;
-                    innerHTML += `<a href="${item.video_source_link}" target="_blank">Source: ${item.video_source_name}</a>`;
-                }
-                resultItem.innerHTML = innerHTML;
-                resultsDiv.appendChild(resultItem);
-            });
-        }
+			if (results.length === 0) {
+				const noResultsMessage = document.createElement('div');
+				noResultsMessage.className = 'no-results-message';
+				noResultsMessage.innerHTML = '<p>No results found.</p>';
+				resultsDiv.appendChild(noResultsMessage);
+			} else {
+				results.forEach(item => {
+					const resultItem = document.createElement('div');
+					resultItem.className = 'result-item';
+					let innerHTML = `<p>${item.sentence}</p>`;
+					if (item.url !== "NA") {
+						innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
+					}
+					if (item.video_source_name !== "NA" && item.video_source_link !== "NA") {
+						innerHTML += `<br>`;
+						innerHTML += `<a href="${item.video_source_link}" target="_blank">Source: ${item.video_source_name}</a>`;
+					}
+					resultItem.innerHTML = innerHTML;
+					resultsDiv.appendChild(resultItem);
+				});
+			}
+		}
 
         function displayPagination() {
             const paginationDiv = document.getElementById('pagination');
