@@ -21,8 +21,8 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            max-height: 80vh; /* Ensure the container does not overflow the viewport */
-            overflow-y: auto; /* Enable vertical scrolling within the container */
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .search-box, .control {
             padding: 12px;
@@ -67,6 +67,9 @@
             border-radius: 6px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .result-item:hover {
             transform: scale(1.02);
@@ -77,6 +80,9 @@
         }
         .result-item a:hover {
             text-decoration: underline;
+        }
+        .result-content {
+            flex-grow: 1;
         }
         .flex-row {
             display: flex;
@@ -123,6 +129,24 @@
             background-color: #ced4da;
             cursor: not-allowed;
             color: #6c757d;
+        }
+        .delete-button {
+            padding: 8px 16px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 6px;
+            background-color: #dc3545;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        .delete-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -172,6 +196,8 @@
         let currentPage = 1;
         const itemsPerPage = 5;
         let allResults = [];
+        let userName = null;
+        const allowedUsers = ["charley@gmail.com", "xin@gmail.com"];
         
         document.getElementById('searchQuery').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
@@ -247,18 +273,66 @@
                 results.forEach(item => {
                     const resultItem = document.createElement('div');
                     resultItem.className = 'result-item';
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'result-content';
+
                     let innerHTML = `<p>${item.sentence}</p>`;
                     if (item.url !== "NA") {
-                        innerHTML += `<a href="${item.url}" target="_blank">View Video</a>`;
+                        innerHTML += ` <a href="${item.url}" target="_blank">View Video</a>`;
                     }
                     if (item.video_source_name !== "NA" && item.video_source_link !== "NA") {
                         innerHTML += `<br>`;
                         innerHTML += `<a href="${item.video_source_link}" target="_blank">Source: ${item.video_source_name}</a>`;
                     }
-                    resultItem.innerHTML = innerHTML;
+                    contentDiv.innerHTML = innerHTML;
+                    resultItem.appendChild(contentDiv);
+
+                    if (allowedUsers.includes(userName)) {
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.className = 'delete-button';
+                        
+                        deleteButton.onclick = function() {
+                            deleteMovie(item.index_name,item.id, userName, deleteButton);
+                        };
+
+                        resultItem.appendChild(deleteButton);
+                    }
+
                     resultsDiv.appendChild(resultItem);
                 });
             }
+        }
+
+        function deleteMovie(indexName,itemId, userName,deleteButton) {
+
+            const apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/deletemovie';
+            const payload = {
+			    index_name: indexName,
+                id: itemId,
+				user_name: userName
+            };
+			
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+            .then(response => {
+                if(response.ok) {
+                    // Disable the delete button
+                    deleteButton.disabled = true;
+                    deleteButton.textContent = 'Deleted';
+                } else {
+                    console.error('Failed to delete item');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
 
         function displayPagination() {
@@ -300,7 +374,7 @@
             }
         }
 
-        // Added code to extract URL parameters and initiate search automatically
+        // Extract URL parameters and initiate search automatically
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const query = urlParams.get('q');
@@ -308,6 +382,7 @@
             const type = urlParams.get('type');
             const wordLengthMin = urlParams.get('word_length_min');
             const wordLengthMax = urlParams.get('word_length_max');
+            userName = urlParams.get('user_name'); // Get user_name from URL parameters
 
             if (query) {
                 document.getElementById('searchQuery').value = query;
