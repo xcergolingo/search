@@ -15,7 +15,8 @@
         }
         .header {
             display: flex;
-            align-items: center;
+            flex-direction: column; /* Changed to column */
+            align-items: center;    /* Center items horizontally */
             width: 95%;
             max-width: 600px;
             margin-top: 20px;
@@ -23,12 +24,13 @@
         }
         .logo {
             max-height: 50px;
-            margin-right: 20px;
+            margin-bottom: 10px;    /* Added margin-bottom */
         }
         .title {
             color: #007bff;
-            font-size: 24px;
+            font-size: 20px;        /* Adjusted font size */
             margin: 0;
+            text-align: center;     /* Centered the text */
         }
         .search-container {
             width: 95%;
@@ -168,8 +170,10 @@
 </head>
 <body>
     <div class="header">
-        <img src="site-logo.png" alt="Logo" class="logo">
-        <h1 class="title">Golingo Video Search</h1>
+        <a href="https://www.golingoapp.com/">
+            <img src="site-logo.png" alt="Logo" class="logo">
+        </a>
+        <h1 class="title">Let's Learn Language Together with AI</h1>
     </div>
     <div class="search-container" id="searchContainer">
         <input type="text" id="searchQuery" class="search-box" placeholder="Search...">
