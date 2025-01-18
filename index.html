@@ -41,9 +41,9 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             max-height: 80vh;
             overflow-y: auto;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .search-box, .control {
             padding: 12px;
@@ -71,7 +71,7 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s ease;
-			align-self: center;
+            align-self: center;
         }
         .search-button:hover {
             background-color: #0056b3;
@@ -185,21 +185,21 @@
         <div class="flex-row">
             <div class="flex-column">
                 <span class="label">Language</span>
-                <select id="languageSelect" class="control">
-						<option value="any">Any</option>
-						<option value="en">English</option>
-						<option value="vi">Vietnamese</option>
-						<option value="es">Spanish</option>
-						<option value="zh-CHS">Chinese</option>
-						<option value="ja">Japanese</option>
-						<option value="fr">French</option>
-						<option value="ru">Russian</option>
-						<option value="ar">Arabic</option>
-						<option value="hi">Hindi</option>
-						<option value="zh">Chinese</option>
-						<option value="de">German</option>
-						<option value="ko">Korean</option>			
-                </select>
+                <input list="languageList" id="languageSelect" class="control" placeholder="Any">
+                <datalist id="languageList">
+                    <option value="Any"></option>
+                    <option value="English"></option>
+                    <option value="Vietnamese"></option>
+                    <option value="Spanish"></option>
+                    <option value="Chinese"></option>
+                    <option value="Japanese"></option>
+                    <option value="French"></option>
+                    <option value="Russian"></option>
+                    <option value="Arabic"></option>
+                    <option value="Hindi"></option>
+                    <option value="German"></option>
+                    <option value="Korean"></option>
+                </datalist>
             </div>
 
             <div class="flex-column">
@@ -211,14 +211,14 @@
                 </select>
             </div>
 
-            <div class="flex-column half">
-                <span class="label">Word Length Min</span>
-                <input type="number" id="minLength" class="control" placeholder="No Min">
-            </div>
-
-            <div class="flex-column half">
-                <span class="label">Word Length Max</span>
-                <input type="number" id="maxLength" class="control" placeholder="No Max">
+            <div class="flex-column">
+                <span class="label">Word Length</span>
+                <select id="wordLengthSelect" class="control">
+                    <option value="any">Any</option>
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                </select>
             </div>
         </div>
 
@@ -226,13 +226,29 @@
         <div id="results" class="results"></div>
         <div class="pagination" id="pagination"></div>
     </div>
-
+    <footer style="text-align:center; margin-top:20px;">
+        © 2023 GoLingoApp
+    </footer>
     <script>
         let currentPage = 1;
         const itemsPerPage = 5;
         let allResults = [];
         let userName = null;
         const allowedUsers = ["charley@gmail.com", "xin@gmail.com"];
+        const langCodeMap = {
+            'Any': 'any',
+            'English': 'en',
+            'Vietnamese': 'vi',
+            'Spanish': 'es',
+            'Chinese': 'zh-CHS',
+            'Japanese': 'ja',
+            'French': 'fr',
+            'Russian': 'ru',
+            'Arabic': 'ar',
+            'Hindi': 'hi',
+            'German': 'de',
+            'Korean': 'ko'
+        };
         
         document.getElementById('searchQuery').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
@@ -246,10 +262,10 @@
 
         function searchMovies() {
             const query = document.getElementById('searchQuery').value;
-            const lang = document.getElementById('languageSelect').value;
+            const langInput = document.getElementById('languageSelect').value.trim();
+            const lang = langCodeMap[langInput] || 'any';
             const type = document.getElementById('typeSelect').value;
-            const wordLengthMin = document.getElementById('minLength').value;
-            const wordLengthMax = document.getElementById('maxLength').value;
+            const wordLength = document.getElementById('wordLengthSelect').value;
             const apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie';
 
             let payload = {
@@ -264,12 +280,15 @@
                 payload.type = type;
             }
 
-            if (wordLengthMin !== '') {
-                payload.word_length_min = Number(wordLengthMin);
-            }
-
-            if (wordLengthMax !== '') {
-                payload.word_length_max = Number(wordLengthMax);
+            if (wordLength !== 'any') {
+                if (wordLength === 'short') {
+                    payload.word_length_max = 10;
+                } else if (wordLength === 'medium') {
+                    payload.word_length_min = 10;
+                    payload.word_length_max = 20;
+                } else if (wordLength === 'long') {
+                    payload.word_length_min = 20;
+                }
             }
           
             fetch(apiUrl, {
@@ -341,7 +360,6 @@
         }
 
         function deleteMovie(indexName, itemId, userName, deleteButton) {
-
             const apiUrl = 'https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/deletemovie';
             const payload = {
                 index_name: indexName,
@@ -413,7 +431,7 @@
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const query = urlParams.get('q');
-            const lang = urlParams.get('lang');
+            const langParam = urlParams.get('lang');
             const type = urlParams.get('type');
             const wordLengthMin = urlParams.get('word_length_min');
             const wordLengthMax = urlParams.get('word_length_max');
@@ -422,17 +440,25 @@
             if (query) {
                 document.getElementById('searchQuery').value = query;
             }
-            if (lang) {
-                document.getElementById('languageSelect').value = lang;
+            if (langParam) {
+                // Reverse lookup language name from code
+                const langName = Object.keys(langCodeMap).find(key => langCodeMap[key] === langParam);
+                if (langName) {
+                    document.getElementById('languageSelect').value = langName;
+                }
             }
             if (type) {
                 document.getElementById('typeSelect').value = type;
             }
-            if (wordLengthMin) {
-                document.getElementById('minLength').value = wordLengthMin;
-            }
-            if (wordLengthMax) {
-                document.getElementById('maxLength').value = wordLengthMax;
+            if (wordLengthMin || wordLengthMax) {
+                const wordLengthSelect = document.getElementById('wordLengthSelect');
+                if (wordLengthMax === '10') {
+                    wordLengthSelect.value = 'short';
+                } else if (wordLengthMin === '10' && wordLengthMax === '20') {
+                    wordLengthSelect.value = 'medium';
+                } else if (wordLengthMin === '20') {
+                    wordLengthSelect.value = 'long';
+                }
             }
 
             if (query) {
