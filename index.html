@@ -79,6 +79,7 @@
         .results {
             margin-top: 20px;
             text-align: left;
+            width: 100%;
         }
         .result-item {
             background-color: #ffffff;
@@ -111,22 +112,22 @@
             flex-wrap: wrap;
             justify-content: space-between;
             gap: 10px;
+            width: 100%;
         }
         .flex-column {
             display: flex;
             flex-direction: column;
             width: 100%;
+            align-items: center; /* Center items horizontally */
         }
         .label {
             font-size: 14px;
             margin-bottom: 5px;
+            text-align: center; /* Center the text */
         }
         @media (min-width: 600px) {
             .flex-column {
-                width: calc(50% - 10px);
-            }
-            .flex-column.half {
-                width: calc(25% - 10px);
+                width: calc(33% - 10px);
             }
         }
         .pagination {
@@ -169,6 +170,18 @@
         .delete-button:disabled {
             background-color: #6c757d;
             cursor: not-allowed;
+        }
+        #customWordLengthInputs {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .no-results-message {
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -218,7 +231,13 @@
                     <option value="short">Short</option>
                     <option value="medium">Medium</option>
                     <option value="long">Long</option>
+                    <option value="custom">Custom</option>
                 </select>
+                <!-- Custom Word Length Inputs -->
+                <div id="customWordLengthInputs" style="display: none; margin-top: 10px;">
+                    <input type="number" id="wordLengthMin" class="control" placeholder="Min Word Length" min="1" style="margin-bottom: 10px;">
+                    <input type="number" id="wordLengthMax" class="control" placeholder="Max Word Length" min="1">
+                </div>
             </div>
         </div>
 
@@ -255,7 +274,15 @@
                 searchMovies();
             }
         });
-        
+
+        document.getElementById('wordLengthSelect').addEventListener('change', function(event) {
+            if (event.target.value === 'custom') {
+                document.getElementById('customWordLengthInputs').style.display = 'flex';
+            } else {
+                document.getElementById('customWordLengthInputs').style.display = 'none';
+            }
+        });
+
         function scrollToTop() {
             document.getElementById('searchContainer').scrollIntoView({ behavior: 'smooth' });
         }
@@ -288,6 +315,16 @@
                     payload.word_length_max = 20;
                 } else if (wordLength === 'long') {
                     payload.word_length_min = 20;
+                } else if (wordLength === 'custom') {
+                    // Get custom min and max values
+                    const wordLengthMin = document.getElementById('wordLengthMin').value;
+                    const wordLengthMax = document.getElementById('wordLengthMax').value;
+                    if (wordLengthMin) {
+                        payload.word_length_min = parseInt(wordLengthMin);
+                    }
+                    if (wordLengthMax) {
+                        payload.word_length_max = parseInt(wordLengthMax);
+                    }
                 }
             }
           
@@ -397,13 +434,19 @@
                 const prevButton = document.createElement('button');
                 prevButton.textContent = 'Prev';
                 prevButton.onclick = prevPage;
-                prevButton.className = currentPage === 1 ? 'disabled' : '';
+                if (currentPage === 1) {
+                    prevButton.classList.add('disabled');
+                    prevButton.disabled = true;
+                }
                 paginationDiv.appendChild(prevButton);
 
                 const nextButton = document.createElement('button');
                 nextButton.textContent = 'Next';
                 nextButton.onclick = nextPage;
-                nextButton.className = currentPage === totalPages ? 'disabled' : '';
+                if (currentPage === totalPages) {
+                    nextButton.classList.add('disabled');
+                    nextButton.disabled = true;
+                }
                 paginationDiv.appendChild(nextButton);
             }
         }
@@ -452,12 +495,13 @@
             }
             if (wordLengthMin || wordLengthMax) {
                 const wordLengthSelect = document.getElementById('wordLengthSelect');
-                if (wordLengthMax === '10') {
-                    wordLengthSelect.value = 'short';
-                } else if (wordLengthMin === '10' && wordLengthMax === '20') {
-                    wordLengthSelect.value = 'medium';
-                } else if (wordLengthMin === '20') {
-                    wordLengthSelect.value = 'long';
+                wordLengthSelect.value = 'custom';
+                document.getElementById('customWordLengthInputs').style.display = 'flex';
+                if (wordLengthMin) {
+                    document.getElementById('wordLengthMin').value = wordLengthMin;
+                }
+                if (wordLengthMax) {
+                    document.getElementById('wordLengthMax').value = wordLengthMax;
                 }
             }
 
