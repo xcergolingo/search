@@ -288,9 +288,13 @@
         let html = `<p>${item.sentence}</p>`;
         if(item.url!=='NA')
           html += ` <a href="${item.url}" target="_blank">View Video</a>`;
-        if(item.video_source_name!=='NA' && item.video_source_link!=='NA')
-          html += `<br><a href="${item.video_source_link}" target="_blank">
-                     Source: ${item.video_source_name}</a>`;
+	
+		if(item.video_source_name!=='NA' && item.video_source_link!=='NA')
+		  html += `<br><a href="${item.video_source_link}" target="_blank"> Source: ${item.video_source_name}</a>`;
+	
+	    if(item.url!=='NA')
+	      html += `<br><a href="https://vendor.golingoapp.com/" target="_blank">Upload Your Video</a>`;
+	
         content.innerHTML = html;
         row.appendChild(content);
 
