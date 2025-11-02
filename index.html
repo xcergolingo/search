@@ -9,7 +9,7 @@
     body {
       font-family: 'Roboto', sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 0 10px;  /* Add horizontal padding */
       background-color: #f8f9fa;
       color: #343a40;
       display: flex;
@@ -17,6 +17,10 @@
       align-items: center;
       min-height: 100vh;
       line-height: 1.4;
+      box-sizing: border-box;
+    }
+    *, *::before, *::after {
+      box-sizing: inherit;
     }
     a {
       color: inherit;
@@ -44,9 +48,9 @@
     .search-container {
       width: 100%;
       max-width: 600px;
-      margin: 10px;
+      margin: 10px auto;
       background-color: #ffffff;
-      padding: 20px;
+      padding: 20px 10px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       flex: 1 0 auto;
@@ -60,7 +64,6 @@
       border-radius: 6px;
       width: 100%;
       font-size: 1rem;
-      box-sizing: border-box;
     }
     .search-button {
       padding: 14px;
@@ -77,7 +80,7 @@
     .search-button:hover {
       background-color: #0056b3;
     }
-    /* Flex containers */
+    /* Flex containers for filters */
     .flex-row {
       display: flex;
       flex-direction: column;
@@ -89,7 +92,7 @@
       font-size: 0.9rem;
       margin-bottom: 4px;
     }
-    /* Results and result items */
+    /* Results */
     .results {
       width: 100%;
       margin-top: 20px;
@@ -112,7 +115,7 @@
       max-height: 300px;
       margin-top: 10px;
     }
-    /* Controls inside result items */
+    /* Controls inside results */
     .controls-row {
       display: flex;
       flex-wrap: wrap;
@@ -213,7 +216,7 @@
       font-size:0.9rem;
       color:#6c757d;
     }
-    /* Larger screens */
+    /* Larger screens adjustments */
     @media (min-width: 600px) {
       .flex-row {
         flex-direction: row;
@@ -228,6 +231,9 @@
       }
       .title {
         font-size: 2rem;
+      }
+      .search-container {
+        padding: 20px; /* slightly more padding on larger screens */
       }
     }
   </style>
@@ -311,25 +317,23 @@
     };
 
     document.getElementById('searchQuery')
-      .addEventListener('keypress', e => { if(e.key==='Enter') searchMovies(); });
+      .addEventListener('keypress', e => { if (e.key === 'Enter') searchMovies(); });
 
     document.getElementById('wordLengthSelect')
       .addEventListener('change', e => {
         document.getElementById('customWordLengthInputs')
-          .style.display = e.target.value==='custom' ? 'flex' : 'none';
+          .style.display = e.target.value === 'custom' ? 'flex' : 'none';
       });
 
     function scrollToTop(){
       document.getElementById('searchContainer')
-        .scrollIntoView({behavior:'smooth'});
+        .scrollIntoView({ behavior: 'smooth' });
     }
 
     function searchMovies(){
       const q = document.getElementById('searchQuery').value.trim();
-      //if (!q) {
-      //  // optional: show message or simply return
-      //  return;
-      //}
+      // You can choose to prevent empty queries:
+      // if (!q) return;
       const langIn = document.getElementById('languageSelect').value.trim();
       const lang = langCodeMap[langIn] || 'any';
       const type = document.getElementById('typeSelect').value;
@@ -344,11 +348,9 @@
         else if (wl === 'medium') {
           payload.word_length_min = 10;
           payload.word_length_max = 20;
-        }
-        else if (wl === 'long') {
+        } else if (wl === 'long') {
           payload.word_length_min = 20;
-        }
-        else if (wl === 'custom') {
+        } else if (wl === 'custom') {
           const mn = parseInt(document.getElementById('wordLengthMin').value, 10);
           const mx = parseInt(document.getElementById('wordLengthMax').value, 10);
           if (!isNaN(mn) && mn > 0) payload.word_length_min = mn;
@@ -357,8 +359,8 @@
       }
 
       fetch('https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/querymovie', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
       .then(r => r.json())
@@ -393,7 +395,6 @@
         sentenceP.textContent = item.sentence;
         content.appendChild(sentenceP);
 
-        // Video embed
         if (item.url && item.url !== 'NA') {
           let embed = null;
           if (item.url.includes('youtube.com/watch') || item.url.includes('youtu.be')) {
@@ -440,7 +441,6 @@
 
         row.appendChild(content);
 
-        // Controls: Add, vote, delete
         const controls = document.createElement('div');
         controls.className = 'controls-row';
 
@@ -479,6 +479,8 @@
           controls.appendChild(vc);
         }
 
+        const resultsDivContainer = document.getElementById('results');
+
         if (allowedUsers.includes(userName)) {
           const del = document.createElement('button');
           del.className = 'delete-button';
@@ -510,7 +512,7 @@
         }
 
         row.appendChild(controls);
-        resultsDiv.appendChild(row);
+        resultsDivContainer.appendChild(row);
       });
     }
 
@@ -529,7 +531,6 @@
       .then(res => {
         upBtn.disabled = downBtn.disabled = false;
         if (res.ok){
-          // Optionally update voteSpan if response returns updated votes
           console.log('Vote update succeeded');
         } else {
           console.error('Vote update failed');
