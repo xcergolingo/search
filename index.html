@@ -73,8 +73,9 @@
         }
         .result-item {
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             padding: 15px;
             margin-bottom: 10px;
             background: #fff;
@@ -84,24 +85,48 @@
             transition: transform .2s;
         }
         .result-item:hover { transform: scale(1.02); }
-        .result-content { flex-grow: 1; }
-        .flex-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        .result-content { width: 100%; }
+        .video-embed {
             width: 100%;
-            justify-content: space-between;
+            max-height: 300px;
+            margin-top: 10px;
         }
-        .flex-column {
+        .controls-row {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            width: 100%;
+            margin-top: 10px;
+            gap: 10px;
         }
+        .vote-container {
+            display:flex; align-items:center; gap:8px;
+        }
+        .vote-btn, .add-btn, .delete-button {
+            font-size:14px; border:none;
+            border-radius:4px;
+            padding:6px 12px; cursor:pointer;
+            transition: background .2s;
+        }
+        .add-btn {
+            background:#28a745; color:#fff;
+        }
+        .add-btn:hover { background:#218838; }
+        .vote-btn {
+            background:#f2f2f2; color:#343a40;
+        }
+        .vote-btn:hover { background:#e2e6ea; }
+        .vote-btn:disabled { background:#d6dadc; color:#adb5bd; cursor:not-allowed; }
+        .delete-button {
+            background:#dc3545; color:#fff;
+        }
+        .delete-button:hover { background:#c82333; }
+        .delete-button:disabled { background:#6c757d; cursor:not-allowed; }
         .label { font-size: 14px; margin-bottom: 5px; text-align: center; }
         @media(min-width:600px) {
             .flex-column { width: calc(33% - 10px); }
+            .controls-row { justify-content: space-between; width: 100%; }
         }
+        #customWordLengthInputs { display:none; flex-direction:column; width:100%; align-items:center; }
+        .no-results-message { text-align:center; color:#6c757d; font-size:18px; margin-top:20px; }
         .pagination { text-align:center; margin-top:20px; }
         .pagination button {
             padding:8px 16px; margin:0 5px;
@@ -113,29 +138,6 @@
         .pagination .disabled {
             background:#ced4da; cursor:not-allowed; color:#6c757d;
         }
-        .delete-button {
-            padding:8px 16px; margin-left:10px;
-            border:none; border-radius:6px;
-            background:#dc3545; color:#fff;
-            cursor:pointer; transition:.3s;
-        }
-        .delete-button:hover { background:#c82333; }
-        .delete-button:disabled { background:#6c757d; cursor:not-allowed; }
-        #customWordLengthInputs { display:none; flex-direction:column; width:100%; align-items:center; }
-        .no-results-message { text-align:center; color:#6c757d; font-size:18px; margin-top:20px; }
-        .vote-container {
-            display:flex; align-items:center; gap:8px; margin-left:12px;
-        }
-        .vote-btn {
-            font-size:20px; border:none; background:#f2f2f2;
-            border-radius:4px; padding:4px 8px; cursor:pointer;
-            transition:background .2s;
-        }
-        .vote-btn:hover { background:#e2e6ea; }
-        .vote-btn:disabled {
-            background:#d6dadc; color:#adb5bd; cursor:not-allowed;
-        }
-        .vote-value { font-size:14px; color:#343a40; }
     </style>
 </head>
 <body>
@@ -212,12 +214,11 @@
       Arabic:'ar', Hindi:'hi', German:'de', Korean:'ko', Italian:'it'
     };
 
-    // Helpers
     document.getElementById('searchQuery')
-      .addEventListener('keypress', e=>{ if(e.key==='Enter') searchMovies(); });
+      .addEventListener('keypress', e => { if(e.key==='Enter') searchMovies(); });
 
     document.getElementById('wordLengthSelect')
-      .addEventListener('change', e=>{
+      .addEventListener('change', e => {
         document.getElementById('customWordLengthInputs')
           .style.display = e.target.value==='custom' ? 'flex' : 'none';
       });
@@ -227,7 +228,6 @@
         .scrollIntoView({behavior:'smooth'});
     }
 
-    // Main search
     function searchMovies(){
       const q = document.getElementById('searchQuery').value,
             langIn = document.getElementById('languageSelect').value.trim(),
@@ -267,7 +267,6 @@
       .catch(console.error);
     }
 
-    // Display results + voting + delete
     function displayResults(){
       const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = '';
@@ -285,46 +284,104 @@
         // Content
         const content = document.createElement('div');
         content.className = 'result-content';
-        let html = `<p>${item.sentence}</p>`;
-        if(item.url!=='NA')
-          html += ` <a href="${item.url}" target="_blank">View Video</a>`;
-	
-		if(item.video_source_name!=='NA' && item.video_source_link!=='NA')
-		  html += `<br><a href="${item.video_source_link}" target="_blank"> Source: ${item.video_source_name}</a>`;
-	
-	    if(item.url!=='NA')
-	      html += `<br><a href="https://vendor.golingoapp.com/" target="_blank">Upload Your Video</a>`;
-	
-        content.innerHTML = html;
+
+        // Sentence
+        const sentenceP = document.createElement('p');
+        sentenceP.textContent = item.sentence;
+        content.appendChild(sentenceP);
+
+        // Embedded video if possible
+        if(item.url && item.url !== 'NA'){
+          // Example: assume it's a YouTube link; extract embed
+          let embed;
+          if(item.url.includes('youtube.com/watch') || item.url.includes('youtu.be')){
+            const videoIdMatch = item.url.match(/(?:v=|\/)([A-Za-z0-9_-]{11})/);
+            const videoId = videoIdMatch ? videoIdMatch[1] : null;
+            if(videoId){
+              embed = document.createElement('iframe');
+              embed.src = 'https://www.youtube.com/embed/' + videoId;
+              embed.width = '100%';
+              embed.height = '315';
+              embed.className = 'video-embed';
+              embed.setAttribute('frameborder', '0');
+              embed.setAttribute('allow', 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+              embed.setAttribute('allowfullscreen', 'true');
+            }
+          }
+          // Fallback: video tag
+          if(!embed){
+            embed = document.createElement('video');
+            embed.src = item.url;
+            embed.controls = true;
+            embed.className = 'video-embed';
+          }
+          content.appendChild(embed);
+        }
+
+        // Source link
+        if(item.video_source_name && item.video_source_name !== 'NA' &&
+           item.video_source_link && item.video_source_link !== 'NA'){
+          const srcLink = document.createElement('a');
+          srcLink.href = item.video_source_link;
+          srcLink.target = '_blank';
+          srcLink.textContent = 'Source: ' + item.video_source_name;
+          content.appendChild(document.createElement('br'));
+          content.appendChild(srcLink);
+        }
+
+        // Upload your video link
+        if(item.url && item.url !== 'NA'){
+          const upLink = document.createElement('a');
+          upLink.href = 'https://vendor.golingoapp.com/';
+          upLink.target = '_blank';
+          upLink.textContent = 'Upload Your Video';
+          content.appendChild(document.createElement('br'));
+          content.appendChild(upLink);
+        }
+
         row.appendChild(content);
+
+        // Controls row (Add button, votes, delete)
+        const controls = document.createElement('div');
+        controls.className = 'controls-row';
+
+        // Add button
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-btn';
+        addBtn.textContent = 'Add';
+        addBtn.onclick = () => {
+          // Bind the sentence or do something; for now just log and disable
+          console.log('Added sentence:', item.sentence);
+          addBtn.disabled = true;
+          addBtn.textContent = 'Added';
+          // You can store item.sentence on addBtn.dataset or elsewhere
+          addBtn.dataset.sentence = item.sentence;
+        };
+        controls.appendChild(addBtn);
 
         // Voting UI for movies
         if(item.index_name === 'movies'){
           const vc = document.createElement('div');
           vc.className = 'vote-container';
 
-          // 👍 button
           const up = document.createElement('button');
           up.className = 'vote-btn';
           up.textContent = '👍';
           up.onclick = () => submitVote(item, 1, up, down, voteSpan);
           vc.appendChild(up);
 
-          // 👎 button
           const down = document.createElement('button');
           down.className = 'vote-btn';
           down.textContent = '👎';
           down.onclick = () => submitVote(item, -1, up, down, voteSpan);
           vc.appendChild(down);
 
-          // current vote display
           const voteSpan = document.createElement('span');
           voteSpan.className = 'vote-value';
-          // assume backend returns current user vote as item.user_vote
-          voteSpan.textContent = 'total votes: ' + (item.vote||0);
+          voteSpan.textContent = 'Total votes: ' + (item.vote||0);
           vc.appendChild(voteSpan);
 
-          row.appendChild(vc);
+          controls.appendChild(vc);
         }
 
         // Delete button if allowed
@@ -349,14 +406,14 @@
             })
             .catch(err=>{ del.disabled = false; console.error(err); });
           };
-          row.appendChild(del);
+          controls.appendChild(del);
         }
 
+        row.appendChild(controls);
         resultsDiv.appendChild(row);
       });
     }
 
-    // Submit vote
     function submitVote(item, voteVal, upBtn, downBtn, voteSpan){
       upBtn.disabled = downBtn.disabled = true;
       fetch('https://jn2vareve4.execute-api.us-east-1.amazonaws.com/prod/update-user-vote', {
@@ -372,8 +429,7 @@
       .then(res=>{
         upBtn.disabled = downBtn.disabled = false;
         if(res.ok){
-          //voteSpan.textContent = 'Your vote: ' + voteVal;
-		  console.error('Vote update succeeded');
+          console.log('Vote update succeeded');
         } else {
           console.error('Vote update failed');
         }
@@ -384,28 +440,46 @@
       });
     }
 
-    // Pagination
     function displayPagination(){
       const p = document.getElementById('pagination');
       p.innerHTML = '';
-      const total = Math.ceil(allResults.length/itemsPerPage);
-      if(total < 2) return;
+      const totalPages = Math.ceil(allResults.length/itemsPerPage);
+      if(totalPages < 2) return;
 
       const prev = document.createElement('button');
       prev.textContent = 'Prev';
-      prev.onclick = ()=>{ if(currentPage>1){ currentPage--; displayResults(); displayPagination(); scrollToTop(); }};
-      if(currentPage===1) prev.disabled=true, prev.classList.add('disabled');
+      prev.onclick = () => {
+        if(currentPage>1){
+          currentPage--;
+          displayResults();
+          displayPagination();
+          scrollToTop();
+        }
+      };
+      if(currentPage===1){
+        prev.disabled = true;
+        prev.classList.add('disabled');
+      }
       p.appendChild(prev);
 
       const next = document.createElement('button');
       next.textContent = 'Next';
-      next.onclick = ()=>{ if(currentPage<total){ currentPage++; displayResults(); displayPagination(); scrollToTop(); }};
-      if(currentPage===total) next.disabled=true, next.classList.add('disabled');
+      next.onclick = () => {
+        if(currentPage<totalPages){
+          currentPage++;
+          displayResults();
+          displayPagination();
+          scrollToTop();
+        }
+      };
+      if(currentPage===totalPages){
+        next.disabled = true;
+        next.classList.add('disabled');
+      }
       p.appendChild(next);
     }
 
-    // On load, read URL params & auto-search
-    window.onload = ()=>{
+    window.onload = () => {
       const ps = new URLSearchParams(window.location.search);
       const q = ps.get('q'),
             lang = ps.get('lang'),
@@ -416,11 +490,11 @@
       userName = ps.get('user_name');
       if(q) document.getElementById('searchQuery').value = q;
       if(lang){
-        const nm = Object.keys(langCodeMap).find(k=>langCodeMap[k]===lang);
+        const nm = Object.keys(langCodeMap).find(k => langCodeMap[k] === lang);
         if(nm) document.getElementById('languageSelect').value = nm;
       }
       if(type) document.getElementById('typeSelect').value = type;
-      if(wmin||wmax){
+      if(wmin || wmax){
         document.getElementById('wordLengthSelect').value = 'custom';
         document.getElementById('customWordLengthInputs').style.display = 'flex';
         if(wmin) document.getElementById('wordLengthMin').value = wmin;
