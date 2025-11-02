@@ -384,7 +384,9 @@
         return;
       }
 
-      slice.forEach(item => {
+      slice.forEach((item, idx) => {
+        const globalIndex = start + idx;  // unique index across all results
+
         const row = document.createElement('div');
         row.className = 'result-item';
 
@@ -447,6 +449,7 @@
         const addBtn = document.createElement('button');
         addBtn.className = 'add-btn';
         addBtn.textContent = 'Add';
+        addBtn.id = `add-button-${globalIndex}`;  // NEW unique id
         addBtn.onclick = () => {
           console.log('Added sentence:', item.sentence);
           addBtn.disabled = true;
@@ -479,8 +482,6 @@
           controls.appendChild(vc);
         }
 
-        const resultsDivContainer = document.getElementById('results');
-
         if (allowedUsers.includes(userName)) {
           const del = document.createElement('button');
           del.className = 'delete-button';
@@ -512,7 +513,7 @@
         }
 
         row.appendChild(controls);
-        resultsDivContainer.appendChild(row);
+        resultsDiv.appendChild(row);
       });
     }
 
