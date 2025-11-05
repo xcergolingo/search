@@ -250,7 +250,7 @@
     <input type="text" id="searchQuery" class="search-box" placeholder="Search...">
 
     <div class="flex-row">
-      <div class="flex-column">
+      <div class="flex-column" id="lang-flex-column">
         <span class="label">Language</span>
         <input list="languageList" id="languageSelect" class="control" placeholder="Any">
         <datalist id="languageList">
@@ -316,6 +316,8 @@
       Arabic:'ar', Hindi:'hi', German:'de', Korean:'ko', Italian:'it'
     };
 
+    let fixedLang = null;  // NEW: when lang query param is passed
+
     document.getElementById('searchQuery')
       .addEventListener('keypress', e => { if (e.key === 'Enter') searchMovies(); });
 
@@ -332,10 +334,15 @@
 
     function searchMovies(){
       const q = document.getElementById('searchQuery').value.trim();
-      // You can choose to prevent empty queries:
-      // if (!q) return;
-      const langIn = document.getElementById('languageSelect').value.trim();
-      const lang = langCodeMap[langIn] || 'any';
+
+      let lang;
+      if (fixedLang) {
+        lang = fixedLang;
+      } else {
+        const langIn = document.getElementById('languageSelect').value.trim();
+        lang = langCodeMap[langIn] || 'any';
+      }
+
       const type = document.getElementById('typeSelect').value;
       const wl = document.getElementById('wordLengthSelect').value;
       const payload = { q };
@@ -385,7 +392,7 @@
       }
 
       slice.forEach((item, idx) => {
-        const globalIndex = start + idx;  // unique index across all results
+        const globalIndex = start + idx;
 
         const row = document.createElement('div');
         row.className = 'result-item';
@@ -449,7 +456,7 @@
         const addBtn = document.createElement('button');
         addBtn.className = 'add-btn';
         addBtn.textContent = 'Add';
-        addBtn.id = `add-button-${globalIndex}`;  // NEW unique id
+        addBtn.id = `add-button-${globalIndex}`;
         addBtn.onclick = () => {
           console.log('Added sentence:', item.sentence);
           addBtn.disabled = true;
@@ -592,12 +599,21 @@
 
       userName = ps.get('user_name');
 
-      if (q) document.getElementById('searchQuery').value = q;
       if (lang) {
         const nm = Object.keys(langCodeMap)
           .find(k => langCodeMap[k] === lang);
-        if (nm) document.getElementById('languageSelect').value = nm;
+        if (nm) {
+          document.getElementById('languageSelect').value = nm;
+          fixedLang = lang;
+          // disable and hide the language control area
+          const langControl = document.getElementById('languageSelect');
+          langControl.disabled = true;
+          const langFlex = document.getElementById('lang-flex-column');
+          langFlex.style.display = 'none';
+        }
       }
+
+      if (q) document.getElementById('searchQuery').value = q;
       if (type) document.getElementById('typeSelect').value = type;
       if (wmin || wmax) {
         document.getElementById('wordLengthSelect').value = 'custom';
@@ -605,7 +621,8 @@
         if (wmin) document.getElementById('wordLengthMin').value = wmin;
         if (wmax) document.getElementById('wordLengthMax').value = wmax;
       }
-      if (q) searchMovies();
+
+      if (q || lang || type || wmin || wmax) searchMovies();
     };
   </script>
 </body>
