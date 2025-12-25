@@ -537,10 +537,34 @@
           vote: voteVal
         })
       })
-      .then(res => {
+      .then(async res => {
         upBtn.disabled = downBtn.disabled = false;
         if (res.ok){
           console.log('Vote update succeeded');
+
+          // Update UI immediately after the endpoint confirms success.
+          // Prefer server-provided totals when available; otherwise apply the delta locally.
+          let serverTotalVotes = null;
+          try {
+            const text = await res.text();
+            if (text) {
+              const data = JSON.parse(text);
+              const body = data && data.body;
+              if (data && typeof data.vote === 'number') serverTotalVotes = data.vote;
+              else if (data && typeof data.total_votes === 'number') serverTotalVotes = data.total_votes;
+              else if (body && typeof body.vote === 'number') serverTotalVotes = body.vote;
+              else if (body && typeof body.total_votes === 'number') serverTotalVotes = body.total_votes;
+            }
+          } catch {
+            serverTotalVotes = null;
+          }
+
+          if (Number.isFinite(serverTotalVotes)) {
+            item.vote = serverTotalVotes;
+          } else {
+            item.vote = (item.vote || 0) + voteVal;
+          }
+          voteSpan.textContent = 'Total votes: ' + (item.vote || 0);
         } else {
           console.error('Vote update failed');
         }
